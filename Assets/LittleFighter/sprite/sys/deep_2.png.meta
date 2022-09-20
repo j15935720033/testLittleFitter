@@ -47,7 +47,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 20
+  spritePixelsToUnits: 10
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -978,7 +978,6 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     nameFileIdTable:
-      deep_2_37: -1807957137
       deep_2_11: 586318846
       deep_2_15: 1992487469
       deep_2_4: -936035551
@@ -1010,13 +1009,14 @@ TextureImporter:
       deep_2_31: -1492271815
       deep_2_39: -1871557436
       deep_2_8: 800506740
+      deep_2_37: -1807957137
       deep_2_12: -1739052132
-      deep_2_20: -2112084073
       deep_2_32: -2117096593
+      deep_2_20: -2112084073
       deep_2_33: 975282787
       deep_2_17: 183155827
-      deep_2_24: 1315878748
       deep_2_35: 129615726
+      deep_2_24: 1315878748
       deep_2_25: -1117143042
   spritePackingTag: 
   pSDRemoveMatte: 0

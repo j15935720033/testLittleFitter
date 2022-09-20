@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System;
 using UnityEngine;
-
+using UnityEngine.UI;
 public class Role_davis : MonoBehaviour
 {
     #region  屬性
@@ -12,31 +12,36 @@ public class Role_davis : MonoBehaviour
     [SerializeField, Header("跳躍力量")]
     private float jumpForce = 250;
     [SerializeField, Header("被打上飛")]
-    private float injuriedUp = 250;
+    private float speedInjuriedUp = 3;
 
     [SerializeField, Header("翻滾速度"), Tooltip("用velocivy控制")]//用velocivy控制
     private float speedRoll = 100;
     [SerializeField, Header("檢查地板尺寸")]
     private Vector3 v3CheckGroundSize = new Vector3(3.61f, 0.27f, 0);
     [SerializeField, Header("檢查地板位移")]
-    private Vector3 v3CheckGroundOffset = new Vector3(0.02f, -1.7f, 0);
+    private Vector3 v3CheckGroundOffset = new Vector3(0.02f, -3.62f, 0);
     [SerializeField, Header("檢查Shadow位移")]
-    private Vector3 v3CheckGroundOffsetShadow = new Vector3(-0.19f, -1.91f, 0);
+    private Vector3 v3CheckGroundOffsetShadow = new Vector3(0f, -3.8f, 0);
     [SerializeField, Header("檢查地板顏色")]
     private Color colorCheckGround = new Color(1, 0, 0.2f, 0.5f);
     [SerializeField, Header("檢查地板圖層")]
     private LayerMask layerGround;
-    [SerializeField, Header("影子")]
-    private GameObject shadow;
-    [SerializeField, Header("血量")]
-    private int hp;//血量
-
+    [SerializeField, Header("總血量")]
+    private float totalHp = 100;//血量
+    [SerializeField, Header("遊戲中血量")]
+    private float scriptHp;//血量
+    [SerializeField, Header("UI血條")]
+    private Image imageHP;
     private Animator animator;
     private Rigidbody2D rig2D;
     private Transform trans;
     private Transform transShadow;
     private Collider2D coll2D;
+
     private GameObject davis;
+    [SerializeField, Header("影子")]
+    private GameObject shadow;
+
 
     private bool clickJump;
     private bool isGround;//是否在地面上,預設是false
@@ -47,6 +52,7 @@ public class Role_davis : MonoBehaviour
     private bool stateRun;//true:跑步中  false:沒跑步
     private bool stateRoll;//true:翻滾中  false:沒翻滾
     private bool stateInjuried;//true:受傷中 false:沒受傷
+    private bool stateInjuriedUp;//true:受傷上飛中
 
     private string parWalk = "Walk";
     private string parRun = "Run";
@@ -56,7 +62,7 @@ public class Role_davis : MonoBehaviour
     private String parRoll = "Roll";
     private string parInjuried = "Injuried";//原地受傷
     private string parInjuriedUp = "Injuried_up";//原地受傷
-
+    private string parDeath = "death";//死亡
     private bool pressRight;//是否按右鍵
     private bool pressLeft;//是否按左鍵
     private float pressRightTime;//按下右鍵時間
@@ -88,10 +94,11 @@ public class Role_davis : MonoBehaviour
 
     System.Random random;
     private int i01;//random產生
-
-
-    
-
+    [SerializeField,Header("Image_遊戲結束底圖")]
+    private CanvasGroup GameObject_GameOver;
+    [SerializeField, Header("淡入時間")]
+    private float intervalFadIn = 0.5f;
+    private bool stateOpenGameOverImage;//死亡畫布狀態
     //測試
     private int twoJump;
     #endregion
@@ -101,7 +108,6 @@ public class Role_davis : MonoBehaviour
     private void Awake()
     {
         davis = GameObject.Find("Davis");
-
         animator = davis.GetComponent<Animator>();
         rig2D = davis.GetComponent<Rigidbody2D>();
         trans = davis.GetComponent<Transform>();
@@ -114,14 +120,15 @@ public class Role_davis : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+
         random = new System.Random();
-        hp = 300;//設定血量
+        scriptHp = totalHp;//遊戲血量初始化
     }
 
     //更新事件:每秒執行約60次，60FPS Frame per second
     void Update()
     {
-        
+
         ShadowOffset();
         /*
         JumpKey();
@@ -129,25 +136,18 @@ public class Role_davis : MonoBehaviour
         UpdateJumpAnimator();
         Attack();
         */
-        if (hp<=0)//死亡
+        //判斷被砍上飛，要掉落回原地
+        if (stateInjuriedUp)
         {
-            Destroy(this.gameObject);
+            InjuriedUp();
         }
+        GameOver();
     }
     //一秒固定50次，物理移動放這裡
     private void FixedUpdate()
     {
         //JumpForce();
 
-    }
-    private void OnGUI()//called several times per frame
-    {
-        if (Event.current.rawType == EventType.KeyDown)
-        {
-
-            //EventCallBack(Event.current);
-            //Debug.Log(Event.current.keyCode);
-        }
     }
     #endregion
     #region unity方法
@@ -171,37 +171,47 @@ public class Role_davis : MonoBehaviour
         //print("碰到物體名子" + collision.gameObject.name);
         //print("碰到tag名子" + collision.gameObject.tag);
 
-        if (collision.gameObject.tag == "Bullet" )//如果碰到子彈
+        //被破空斬打
+        if (collision.gameObject.tag == "Bullet" && collision.gameObject.name == "deep_ball(Clone)")//如果碰到子彈
         {
+            print("被破空斬打");
             this.animator.SetBool(parInjuried, true);//開啟受傷動畫
             canmove = false;//不能移動
             stateInjuried = true;
             //print("碰到物體名子" + collision.gameObject.name);
-            hp -= 50;//被打到扣血
+            this.DeductBlood(40);//扣40滴血
             Destroy(collision.gameObject);//子彈打到人就消失
             StartCoroutine(WaitInjuried());
         }
-        
-        if (collision.gameObject.tag == "Player")//如果碰到玩家
-        {
-            print("被鬼哭斬打");
-            
-        }
-        
-        /*
-        if (collision.gameObject.tag == "Player" && PlayerPrefs.GetInt("鬼哭斬")==1)//如果碰到玩家
+
+        //被鬼哭斬打
+        if (collision.gameObject.tag == "Player" && PlayerPrefs.GetString("Deep_鬼哭斬") == "鬼哭斬" && !stateInjuriedUp)//如果碰到玩家 && 被鬼哭展打到 && 狀態不是打飛(不然打飛中還能再打)
         {
             print("被鬼哭斬打");
             animator.SetBool(parInjuriedUp, true);//上飛動畫
+            this.DeductBlood(20);//扣20滴血
             moveShadow = false;//影子不要位移
             originalY = transform.position.y;//記錄跳起的位置
-            rig2D.AddForce(new Vector2(0, injuriedUp));//往上力量
+            //rig2D.AddForce(new Vector2(0, speedInjuriedUp));//往上力量
+            rig2D.velocity = new Vector2(0, speedInjuriedUp);//往上速度
             clickJump = false;
             canJump = false;
 
-            StartCoroutine(WaitkInjuriedUp());
+            StartCoroutine(WaitInjuriedUp());
+        }
+        //被普攻打
+        if (collision.gameObject.tag == "Player" && PlayerPrefs.GetString("Deep_普攻") == "Deep_普攻" )//如果碰到玩家 && 被鬼哭展打到 
+        {
+            print("被普攻打");
+            this.animator.SetBool(parInjuried, true);//開啟受傷動畫
+            this.DeductBlood(20);//扣20滴血
+            canmove = false;//不能移動
+            stateInjuried = true;
+            clickJump = false;
+            canJump = false;
 
-        }*/
+            StartCoroutine(WaitInjuried());
+        }
     }
     //2個物件碰撞離開執行一次
     private void OnTriggerExit2D(Collider2D collision)
@@ -239,57 +249,11 @@ public class Role_davis : MonoBehaviour
     #region 自訂方法
 
 
-    /// <summary>
-    /// 用Input.GetAxisRaw
-    /// </summary>
-    protected void Walk()
-    {
-
-        //****************水平*******************//
-        float moveH = Input.GetAxis("Horizontal");//取得-1~1
-        float moveHDir = Input.GetAxisRaw("Horizontal");//取得-1、0、1
-
-
-        //****************垂直走*******************//
-        float moveV = Input.GetAxis("Vertical");//取得-1、0、1
-        float moveVDir = Input.GetAxisRaw("Vertical");//取得-1、0、1
-
-
-
-        // Time.deltaTime:Make it move 10 meters per second instead of 10 meters per frame...
-        //****************人物加速度*******************//
-        //rig2D.AddForce(new Vector2(moveDir * speedWalk * Time.deltaTime, rig2D.velocity.y));
-        //rig2D.velocity = new Vector2(moveDir * speedWalk * Time.deltaTime, rig2D.velocity.y);
-        //***************人物加速度上下左右*******************//
-        rig2D.velocity = new Vector2(moveH * speedWalk * Time.deltaTime, moveVDir * speedWalk * Time.deltaTime);
-
-        //****************走路動畫*******************//
-        //print($"velocity={rig2D.velocity.x}");
-        if (Mathf.Abs(moveHDir) > 0)
-        {
-            animator.SetBool(parWalk, true);
-        }
-        else
-        {
-            animator.SetBool(parWalk, false);
-        }
-
-        //****************人物轉向*******************//
-        if (moveHDir > 0)
-        {
-            //trans.localScale = new Vector2(1f, trans.localScale.y);//向左改变图像朝向左
-            trans.rotation = new Quaternion(trans.rotation.x, 0, trans.rotation.z, trans.rotation.w);
-        }
-        else if (moveHDir < 0)
-        {
-            //trans.localScale = new Vector2(-1f, trans.localScale.y);//向左改变图像朝向左
-            trans.rotation = new Quaternion(trans.rotation.x, 180, trans.rotation.z, trans.rotation.w);
-        }
-    }
+    
     /// <summary>
     /// 用Input.GetKey控制上下左右
     /// </summary>
-    protected  void Walk2()
+    protected void Walk2()
     {
         //************************GetKey*************************************************//
         //右鍵
@@ -397,47 +361,14 @@ public class Role_davis : MonoBehaviour
 
         }
 
-
-
-
     }
 
 
-    /// <summary>
-    /// 判斷是否在地板
-    /// </summary>
-    private void CheckGround()
-    {
-        //2D碰撞器=物理.覆蓋型區域(中心點,尺寸,角度,圖層)。transform.position+v3CheckGroundOffset:代表DrawCube位置
-        Collider2D hit = Physics2D.OverlapBox(transform.position + v3CheckGroundOffset, v3CheckGroundSize, 0, layerGround);
-
-
-        //isGround=hit //簡寫hit有東西，就是trues
-        if (hit != null)
-        {
-            //print($"hit是否有撞到東西={hit.name}");
-            isGround = true;//在地板
-        }
-        else
-        {
-            //print($"不在地板hit是否有撞到東西={hit.name}");
-            isGround = false;
-        }
-    }
-    protected  void Jump()
-    {
-        if (Input.GetKeyDown(KeyCode.RightShift) && isGround)
-        {
-            print("跳躍");
-            //print(gameObject.transform.position);
-            gameObject.transform.position += new Vector3(0, pSpeedJump, 0);
-            //rig2D.gravityScale = 1;
-        }
-    }
+   
     /// <summary>
     ///紀錄玩家是否按RightShift(跳躍)，並且落下時把地心引力、y速度都歸0
     /// </summary>
-    protected  void JumpKey()
+    protected void JumpKey()
     {
 
         if (Input.GetKeyDown(KeyCode.RightShift) && canJump)
@@ -461,7 +392,7 @@ public class Role_davis : MonoBehaviour
     /// <summary>
     /// 有按下RightShift(跳躍鍵)，給向上推力，並把地心引力設為1
     /// </summary>
-    protected  void JumpForce()//案跳躍&&在地板時給向上的力量
+    protected void JumpForce()//案跳躍&&在地板時給向上的力量
     {
         if (clickJump && canJump && !stateRoll)//有按rightShift && 能跳 && 不翻滾   能跳
         {
@@ -610,6 +541,75 @@ public class Role_davis : MonoBehaviour
             pressRightShifTime = Time.time;
         }
     }
+    /// <summary>
+    /// 扣血
+    /// </summary>
+    /// <param name="deductBlood"></param>
+    private void DeductBlood(int deductBlood)
+    {
+        this.scriptHp -= deductBlood;//程式中扣血
+        imageHP.fillAmount = scriptHp / totalHp;//UI中扣血
+        if (imageHP.fillAmount <= 0)
+        {
+            //print("死亡動畫");
+            animator.SetBool(parDeath, true);//死亡動畫
+            transform.position = new Vector2(transform.position.x, transform.position.y - 2.57f);//死亡動畫降低位置
+        }
+    }
+    /// <summary>
+    ///血量歸0就遊戲結束
+    /// </summary>
+    private void GameOver()
+    {
+        if (imageHP.fillAmount <= 0)
+        {
+            //print("遊戲結束畫面");
+            shadow.SetActive(false);//死亡時關閉影子
+
+            if(!stateOpenGameOverImage)
+            {
+                stateOpenGameOverImage = true;//畫布開啟中
+                StartCoroutine(CavasGroupGameOver());
+            }
+                
+
+        }
+
+    }
+    /// <summary>
+    /// 被打上飛，判斷掉回原本地方
+    /// </summary>
+    private void InjuriedUp()
+    {
+        if (Mathf.Abs(transform.position.y - originalY) < 0.2 && !canJump && !stateRoll)//落下時的位置，小於等於起跳點時 && 在空中 && 不翻滾。取消地心引力和y速度 && 受傷上飛中
+        {
+            rig2D.gravityScale = 0;
+            rig2D.velocity = new Vector2(0, 0);//碰到撞時也會有反向作用力的速度，因為有重力讓y軸有加速度用，會繼續掉落，所以y軸速度要用0
+            transform.position = new Vector2(transform.position.x, originalY);//掉落時高度設定成跳躍前高度
+            canJump = true;
+            moveShadow = true;//影子移動
+            animator.SetBool(parInjuriedUp, false);//關閉受傷上飛動畫
+            canmove = true;//可以移動
+            stateInjuriedUp = false;//關閉受傷上飛狀態
+        }
+    }
+    /// <summary>
+    /// 遊戲結束Canvasgroup顯示淡入
+    /// </summary>
+    /// <returns></returns>
+    IEnumerator CavasGroupGameOver(bool fadeIn=true)
+    {
+        //三元運算子
+        //布林直?布林值為 true:布林值為 false
+        float increase = fadeIn ? 0.1f : -0.1f;
+        for (int i=0;i<10;i++)
+        {
+            GameObject_GameOver.alpha += increase;
+            //print(i);
+            yield return new WaitForSeconds(intervalFadIn);
+        }
+    }
+   
     //防禦等待_防禦自動解除
     IEnumerator WaitDefense()
     {
@@ -642,72 +642,16 @@ public class Role_davis : MonoBehaviour
     }
 
     //上飛等待
-    IEnumerator WaitkInjuriedUp()
+    IEnumerator WaitInjuriedUp()
     {
         yield return new WaitForSeconds(waitMillisecond);//等待幾秒
+        stateInjuriedUp = true;//受傷上飛狀態
         rig2D.gravityScale = 1;//跳起後地心引力設1
-        if (transform.position.y <= originalY && !canJump && !stateRoll)//落下時的位置，小於等於起跳點時 && 在空中 && 不翻滾。取消地心引力和y速度
-        {
-            rig2D.gravityScale = 0;
-            rig2D.velocity = new Vector2(0, 0);//碰到撞時也會有反向作用力的速度，因為有重力讓y軸有加速度用，會繼續掉落，所以y軸速度要用0
-            canJump = true;
-            moveShadow = true;//影子移動
-            animator.SetBool(parInjuriedUp, false);//關閉受傷上飛動畫
-            canmove = true;//可以移動
-        }
     }
 
-
-    //***********unity 组合键******************//
-    private void EventCallBack(Event e)
-    {
-        //print(e.modifiers & EventModifiers.Control);//Control
-        bool eventDown = (e.modifiers & EventModifiers.Control) != 0;
-
-        if (!eventDown)
-        {
-            Walk2();
-        }
-        else
-        {
-            e.Use();        //使用这个事件
-
-            switch (e.keyCode)
-            {
-                case KeyCode.UpArrow:
-                    Debug.Log("按下组合键:ctrl+↑");
-                    break;
-                case KeyCode.DownArrow:
-                    Debug.Log("按下组合键:ctrl+↓");
-                    break;
-                case KeyCode.LeftArrow:
-                    Debug.Log("按下组合键:ctrl+←");
-                    break;
-                case KeyCode.RightArrow:
-                    Debug.Log("按下组合键:ctrl+→");
-                    break;
-            }
-        }
-    }
+ 
 
 
-    //**********測試********************//
-    void TwoJump()
-    {
-        if (isGround)//在地面上
-        {
-            twoJump = 2;
-        }
-        if (Input.GetKeyDown(KeyCode.RightShift) && twoJump > 0)//能跳躍次數
-        {
-            rig2D.velocity = Vector2.up * jumpForce;//Vector2.up 等於new Vector2(0,1)
-            twoJump -= 1;
-        }
-        if (Input.GetKeyDown(KeyCode.RightShift) && twoJump == 0 && isGround)
-        {
-            rig2D.velocity = Vector2.up * jumpForce;//Vector2.up 等於new Vector2(0,1)
 
-        }
-    }
     #endregion
 }

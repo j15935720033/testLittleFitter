@@ -8,6 +8,7 @@ TagManager:
   - GameController
   - Enemy
   - Bullet
+  - BGM
   layers:
   - Default
   - TransparentFX
