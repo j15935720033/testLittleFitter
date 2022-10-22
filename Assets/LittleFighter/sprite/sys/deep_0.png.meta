@@ -195,7 +195,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 255
-        y: 455
+        y: 454
         width: 65
         height: 74
       alignment: 9
@@ -1687,8 +1687,8 @@ TextureImporter:
       deep_0_50: 2000147513
       deep_0_63: 911999684
       deep_0_51: -538633514
-      deep_0_69: -617555593
       deep_0_30: -686934473
+      deep_0_69: -617555593
       deep_0_15: -1024980045
       deep_0_0: -1872637229
       deep_0_1: 36405214

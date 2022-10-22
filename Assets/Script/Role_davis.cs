@@ -44,8 +44,6 @@ public class Role_davis : MonoBehaviour
 
 
     private bool clickJump;
-    private bool isGround;//是否在地面上,預設是false
-    private bool isWalk;//是否走路,預設是false
     private bool canJump = true;//是否能做跳躍。動畫:[true:不做跳躍動畫,false:做跳躍動畫]
     private bool moveShadow = true;//移動影子
     private bool canmove = true;//是否能移動
@@ -61,8 +59,8 @@ public class Role_davis : MonoBehaviour
     private String parTriggerRoll = "TriggerRoll";
     private String parRoll = "Roll";
     private string parInjuried = "Injuried";//原地受傷
-    private string parInjuriedUp = "Injuried_up";//原地受傷
-    private string parDeath = "death";//死亡
+    private string parInjuriedUp = "Injuried_up";
+    private string parDeath = "Death";//死亡
     private bool pressRight;//是否按右鍵
     private bool pressLeft;//是否按左鍵
     private float pressRightTime;//按下右鍵時間
@@ -85,9 +83,8 @@ public class Role_davis : MonoBehaviour
     private float pressInterval5 = 0.5f;//區間秒數0.2
     private float pSpeedWalk = 0.01f;//用position走路
     private float pSpeedRun = 0.05f;//用position跑步路
-    private float pSpeedJump = 1f;
 
-    private float waitMillisecond = 0.5f;//等待時間
+    private float waitMillisecond = 0.5f;//受傷等待時間
 
     private float originalY;//紀錄跳起翻滾時，原本y的位置
     private float originalRollY;//紀翻滾時時，原本y的位置

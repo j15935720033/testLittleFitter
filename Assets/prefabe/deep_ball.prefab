@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 946968097189693162}
   - component: {fileID: 946968097189693163}
   - component: {fileID: -3624827577511000363}
+  - component: {fileID: 9092289767556024365}
   m_Layer: 0
   m_Name: deep_ball
   m_TagString: Bullet
@@ -114,6 +115,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 93b212272684a1b4b83cb5329e5b94c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speedBullet: 10
-  timer: 10
-  bulletKind: 0
+  speedBullet: 30
+  timer: 5
+  direction: 0
+--- !u!114 &9092289767556024365
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 946968097189693160}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d628d6944e6aa9942a1c8c3fd643360f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dataAttack: {fileID: 11400000, guid: 5a061da70ffcaf74db709720d7c8a051, type: 2}

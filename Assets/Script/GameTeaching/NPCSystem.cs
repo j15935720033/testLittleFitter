@@ -14,19 +14,20 @@ namespace chia
         private DataNPC dataNPC;
         private Animator ani;
         private string parTipFad = "Trigger_提示淡出淡入";
+        private string parHitName = "Deep_Player";//NPC碰到誰要觸發
         private bool isInTrigger;//玩家是否走進對話碰撞區域內
         [SerializeField, Header("NPC照相機")]
         GameObject npcCamera;
         DialogueSystem dialogueSystem;
         private string parDialogue = "isLookUp";
-        private Role_deep scriptDeep;
+        private Role_Deep_Player scriptDeep;
 
         #region unity方法
         private void Awake()
         {
             ani = GameObject.Find("Image_對話提示").GetComponent<Animator>();
             dialogueSystem = FindObjectOfType<DialogueSystem>();//找Script，等於要找有初始化的DialogueSystem
-            scriptDeep = FindObjectOfType<Role_deep>();
+            scriptDeep = FindObjectOfType<Role_Deep_Player>();
         }
         private void Update()
         {
@@ -55,7 +56,7 @@ namespace chia
         /// <param name="nameHit">碰撞物件名稱</param>
         private void CheckPlayerAndAnimation(string nameHit, bool isInTrigger)
         {
-            if (nameHit == "Deep")
+            if (nameHit == parHitName)
             {
                 this.isInTrigger = isInTrigger;
                 ani.SetTrigger(parTipFad);//開啟提示對話
